@@ -127,9 +127,10 @@ def get_fundamentals(query_object, date=None, statDate=None):
             if statDate is not None:
                 q = q.filter( entity.statDate == statDate )
             else:
-                q1 = Query([entity.code, func.max(entity.pubDate).label('pubDate')]).filter(entity.pubDate<=date,entity.pubDate>=left_date).group_by(entity.code).subquery()                
+                q1 = Query([entity.code, func.max(entity.statDate).label('statDate')]).filter(entity.pubDate<=date,entity.pubDate>=left_date).group_by(entity.code).subquery()                
                 #q1 = Query([entity.code, func.max(entity.pubDate).label('pubDate')]).filter(entity.pubDate<=date).group_by(entity.code).subquery()                
-                q = q.filter(entity.pubDate <= date, entity.pubDate>=left_date).filter(entity.pubDate == q1.c.pubDate, entity.code == q1.c.code)                
+                #q = q.filter(entity.pubDate <= date, entity.pubDate>=left_date).filter(entity.pubDate == q1.c.pubDate, entity.code == q1.c.code)                
+                q = q.filter(entity.statDate == q1.c.statDate, entity.code == q1.c.code)                
                 #q = q.filter(entity.pubDate <= date).filter(entity.pubDate == q1.c.pubDate, entity.code == q1.c.code)                
         else:
             raise TypeError()
