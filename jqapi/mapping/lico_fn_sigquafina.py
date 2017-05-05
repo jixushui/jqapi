@@ -25,21 +25,12 @@ from sqlalchemy import Column, String, Integer, Float, Date
 from sqlalchemy.orm import *
 import pandas as pd
 
-base = declarative_base()
-class valuation(base):
-    __tablename__ = 'valuation'
+base = declarative_base()   
+class lico_fn_sigquafina(base):
+    __tablename__ = 'lico_fn_sigquafina'
         
     code    = Column(String, primary_key=True)
-    day     = Column(Date)
+    pubDate = Column('pubdate', Date)
+    statDate = Column('statdate', Date)
 
-    capitalization            =Column(Float)
-    circulating_cap           =Column(Float)
-    market_cap                =Column(Float)
-    circulating_market_cap    =Column(Float)
-    turnover_ratio            =Column(Float)
-    pe_ratio                  =Column(Float)
-    pe_ratio_lyr              =Column(Float)
-    pb_ratio                  =Column(Float)
-    ps_ratio                  =Column(Float)
-    pcf_ratio                 =Column(Float)    
-    dividend_yield            =Column(Float)    
+    jltz                      =Column(Float)

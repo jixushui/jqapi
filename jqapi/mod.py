@@ -35,6 +35,7 @@ from sqlalchemy import func
 from mapping import *
 from utils import *
 
+
 # todo: 可配置
 engine=create_engine('oracle://CJHJDM:CJHJDM@172.16.48.205:1521/cjhjdm', echo=False) 
 #engine=create_engine('sqlite://///home/db_fund', echo=False) 
@@ -90,14 +91,14 @@ def get_fundamentals(query_object, date=None, statDate=None):
         #date = dt.date.today()-dt.timedelta(1)
         #print date
         today_str = dt.date.today()
-        date = get_previous_trading_date(today_str)
+        date = get_previous_trading_date(today_str)#-dt.timedelta(6)
         #减小查询量 只查询指定日期一年内    
         left_date = dt.date.today()-dt.timedelta(365)
     
     #减小查询量 只查询指定日期一年内    
     if date is not None:
         left_date = date-dt.timedelta(365)
-    
+    #print date
     # add filter
     q = query_object        
     first_entity = None
@@ -122,8 +123,7 @@ def get_fundamentals(query_object, date=None, statDate=None):
                 #q1 = Query([entity.code, func.max(entity.day).label('day')]).filter(entity.day<=date).group_by(entity.code).subquery()
                 #q = q.filter(entity.day <= date).filter(entity.day == q1.c.day, entity.code == q1.c.code)                
                 q = q.filter(entity.day == date)                
-                
-        elif entity in [balance,cash_flow,income,indicator]:                        
+        elif entity in [balance,cash_flow,income,indicator,lico_fn_sigquafina]:                        
             if statDate is not None:
                 q = q.filter( entity.statDate == statDate )
             else:
@@ -137,11 +137,18 @@ def get_fundamentals(query_object, date=None, statDate=None):
         visited_entity.append(entity)
                 
     # read from oracle
-    #print q.statement
     df = pd.read_sql_query(q.statement, engine)
     
     # 由于oracle列名限制，这里做下转换
     df.rename(columns=column_map, inplace=True)
+
+    # 时间转为字符串
+    date_col_list = ['day', 'pubDate', 'statDate']
+    df_col_list = list(df.columns)
+    date_to_str_set = set(date_col_list) & set(df_col_list)
+    for col in date_to_str_set:
+        df[col] = df[col].apply(lambda x: x.strftime("%Y-%m-%d"))
+
     return df
     
     
@@ -247,6 +254,7 @@ class JqapiMod(AbstractMod):
         register_api('cash_flow', cash_flow)
         register_api('indicator', indicator)
         register_api('valuation', valuation)        
+        register_api('lico_fn_sigquafina', lico_fn_sigquafina)        
                
     def tear_down(self, code, exception=None):
         pass

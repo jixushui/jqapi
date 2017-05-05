@@ -22,9 +22,17 @@ import numpy as np
 
 
 def parse_statdate(statDate):
-    if statDate is None or type(statDate) != str or len(statDate) not in [4,6]:
+    if statDate is None:
         raise TypeError()
         
+    #datetime: '2017-04-04'    
+    if type(statDate) != str:
+        return statDate
+
+    #string: '2017q1'
+    if len(statDate) not in [4,6]:
+        raise TypeError()
+
     quar2monthday = {
     1:(3,31),
     2:(6,30),
