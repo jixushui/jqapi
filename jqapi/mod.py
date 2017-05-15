@@ -79,26 +79,28 @@ def get_fundamentals(query_object, date=None, statDate=None):
         raise TypeError()
 
     if date is not None:
+        #减小查询量 只查询指定日期一年内    
         date = parse_date(date)                       
+        left_date = date-dt.timedelta(365)
         
     if statDate is not None:            
         statDate = parse_statdate(statDate)
-        # debug
-        #print (statDate)
     
+    #print date
+    today_str = dt.date.today()
+    yesterday_str = dt.date.today()-dt.timedelta(1)
     # 如果都为None，取date
     if date is None and statDate is None:
-        #date = dt.date.today()-dt.timedelta(1)
-        #print date
-        today_str = dt.date.today()
         date = get_previous_trading_date(today_str)#-dt.timedelta(6)
         #减小查询量 只查询指定日期一年内    
         left_date = dt.date.today()-dt.timedelta(365)
-    
-    #减小查询量 只查询指定日期一年内    
-    if date is not None:
-        left_date = date-dt.timedelta(365)
+    #date昨天时 判断下是否为非交易日 不是的话取上一个交易日
+    elif statDate is None and date == yesterday_str:
+        last_trading = get_previous_trading_date(today_str)#-dt.timedelta(6)
+        if date != last_trading:
+            date = last_trading
     #print date
+    
     # add filter
     q = query_object        
     first_entity = None
