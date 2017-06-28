@@ -31,6 +31,7 @@ from sqlalchemy.orm.query import *
 from sqlalchemy import Column, String, Integer, Float
 from sqlalchemy.orm import *
 from sqlalchemy import func
+from sqlalchemy import or_
 
 from mapping import *
 from utils import *
@@ -153,7 +154,16 @@ def get_fundamentals(query_object, date=None, statDate=None):
         df[col] = df[col].apply(lambda x: x.strftime("%Y-%m-%d"))
 
     return df
+
+#oracle不能过滤多余1000的stock  使用or做替代
+def filter_code(q,stock_list,table_col_class):
+    if len(stock_list)>999:
+        q = q.filter(or_(table_col_class.in_(stock_list[:999]),
+                      (table_col_class.in_(stock_list[999:]))))
+    else:
+        q = q.filter(table_col_class.in_(stock_list))
     
+    return q    
     
 def query(*args, **kwargs):
     return Query(args)
@@ -162,8 +172,13 @@ def query(*args, **kwargs):
 def history(count, unit='1d', field='avg', security_list=None, df=True, skip_paused=False, fq='pre'):
     """
         NOTICE:
-            米宽接口不支持fq参数
-            米宽接口多了include_now参数，取默认值
+            米宽接口不支持fq参数 --fix by xsc
+            米宽接口多了include_now参数，取默认值 --add by xsc
+            unit='1m' not support waiting for using new data interface
+            field不支持多个 待修复
+            多只股票时返回df格式与JQ不一致 待修复
+            gericixin中会传多只股票 暂不知返回是否与jq一致 待修复
+            his = history(5, '1d', 'close', security_list=stock, skip_paused=True) 有BUG 待修复
     """
     
     if security_list is None:
@@ -173,12 +188,17 @@ def history(count, unit='1d', field='avg', security_list=None, df=True, skip_pau
         res = pd.DataFrame()
     else:
         res = {}
-                
-    for s in security_list:
-        res[s] = history_bars(s, count, unit, field, skip_paused)    
+    
+    if unit == '1d':           
+        for s in security_list:
+            res[s] = history_bars(s, count, unit, field, skip_paused, include_now=True, adjust_type=fq) 
+    #else unit == '1m':
+    #    for s in security_list:
+    #        res[s] = history_bars(s, count, unit, field, skip_paused)    
+    
     return res
     
-
+#貌似有bug 会导致all_instrments去不到完整股票集合
 def get_security_info(code):
         
     #todo 不完善
@@ -234,7 +254,23 @@ def get_industry_stocks(industry_code, date=None):
     """
     return industry(industry_code)    
         
+def get_all_securities(item, date=None):
+    item_map = {
+        'de_listed_date':'end_date',\
+        'listed_date':'start_date',\
+        'abbrev_symbol':'name',\
+        'symbol':'display_name'
+        }
+    if item == "stock":
+        type_name = "CS"
+    df = all_instruments(type_name,None)
+    drop_col = list(set(df.columns)-set(item_map.keys()+['order_book_id']))
+    tmp_df = df.drop(drop_col, axis=1)
     
+    tmp_df.rename(columns=item_map, inplace=True)
+    tmp_df.set_index("order_book_id", inplace=True)
+    return tmp_df
+
 def get_current_data():
     pass
     
@@ -251,6 +287,8 @@ class JqapiMod(AbstractMod):
         register_api('get_security_info', get_security_info)
         register_api('get_industry_stocks', get_industry_stocks)
         register_api('get_extras', get_extras)
+        register_api('get_all_securities', get_all_securities)
+        register_api('filter_code', filter_code)
         # model
         register_api('income', income)
         register_api('balance', balance)
