@@ -33,4 +33,5 @@ class lico_fn_sigquafina(base):
     pubDate = Column('pubdate', Date)
     statDate = Column('statdate', Date)
 
-    jltz                      =Column(Float)
+    jltz    =Column(Float)
+    roe     =Column(Float)
