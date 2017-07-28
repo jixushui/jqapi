@@ -36,9 +36,14 @@ from sqlalchemy import or_
 from mapping import *
 from utils import *
 
-
+import ConfigParser
+conf = ConfigParser.ConfigParser()
+conf.read("/home/workspace/rqalpha/general.conf")
+database_path= conf.get("database", "path")
+print database_path
 # todo: 可配置
-engine=create_engine('oracle://CJHJDM:CJHJDM@172.16.48.205:1521/cjhjdm', echo=False) 
+#engine=create_engine('oracle://CJHJDM:CJHJDM@172.16.48.205:1521/cjhjdm', echo=False) 
+engine=create_engine(database_path, echo=False) 
 #engine=create_engine('sqlite://///home/db_fund', echo=False) 
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -92,7 +97,7 @@ def get_fundamentals(query_object, date=None, statDate=None):
     yesterday_str = dt.date.today()-dt.timedelta(1)
     # 如果都为None，取date
     if date is None and statDate is None:
-        date = get_previous_trading_date(today_str)#-dt.timedelta(6)
+        date = get_previous_trading_date(today_str)#-dt.timedelta(1)
         #减小查询量 只查询指定日期一年内    
         left_date = dt.date.today()-dt.timedelta(365)
     #date昨天时 判断下是否为非交易日 不是的话取上一个交易日
