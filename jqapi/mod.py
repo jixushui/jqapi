@@ -98,6 +98,7 @@ def get_fundamentals(query_object, date=None, statDate=None):
     # 如果都为None，取date
     if date is None and statDate is None:
         date = get_previous_trading_date(today_str)#-dt.timedelta(1)
+        #date = today_str
         #减小查询量 只查询指定日期一年内    
         left_date = dt.date.today()-dt.timedelta(365)
     #date昨天时 判断下是否为非交易日 不是的话取上一个交易日
@@ -135,7 +136,9 @@ def get_fundamentals(query_object, date=None, statDate=None):
             if statDate is not None:
                 q = q.filter( entity.statDate == statDate )
             else:
-                q1 = Query([entity.code, func.max(entity.statDate).label('statDate')]).filter(entity.pubDate<=date,entity.pubDate>=left_date).group_by(entity.code).subquery()                
+                date = today_str
+                q1 = Query([entity.code, func.max(entity.statDate).label('statDate')]).filter(entity.pubDate<date,entity.pubDate>=left_date).group_by(entity.code).subquery()                
+                #q1 = Query([entity.code, func.max(entity.statDate).label('statDate')]).filter(entity.pubDate<=date,entity.pubDate>=left_date).group_by(entity.code).subquery()                
                 #q1 = Query([entity.code, func.max(entity.pubDate).label('pubDate')]).filter(entity.pubDate<=date).group_by(entity.code).subquery()                
                 #q = q.filter(entity.pubDate <= date, entity.pubDate>=left_date).filter(entity.pubDate == q1.c.pubDate, entity.code == q1.c.code)                
                 q = q.filter(entity.statDate == q1.c.statDate, entity.code == q1.c.code)                
