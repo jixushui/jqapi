@@ -132,13 +132,13 @@ def get_fundamentals(query_object, date=None, statDate=None):
                 #q1 = Query([entity.code, func.max(entity.day).label('day')]).filter(entity.day<=date).group_by(entity.code).subquery()
                 #q = q.filter(entity.day <= date).filter(entity.day == q1.c.day, entity.code == q1.c.code)                
                 q = q.filter(entity.day == date)                
-        elif entity in [balance,cash_flow,income,indicator,lico_fn_sigquafina]:                        
+        elif entity in [balance,cash_flow,income,indicator,lico_fn_sigquafina,lico_fn_fcrgincomes]:                        
             if statDate is not None:
                 q = q.filter( entity.statDate == statDate )
             else:
-                date = today_str
-                q1 = Query([entity.code, func.max(entity.statDate).label('statDate')]).filter(entity.pubDate<date,entity.pubDate>=left_date).group_by(entity.code).subquery()                
-                #q1 = Query([entity.code, func.max(entity.statDate).label('statDate')]).filter(entity.pubDate<=date,entity.pubDate>=left_date).group_by(entity.code).subquery()                
+                #date = today_str
+                #q1 = Query([entity.code, func.max(entity.statDate).label('statDate')]).filter(entity.pubDate<date,entity.pubDate>=left_date).group_by(entity.code).subquery()                
+                q1 = Query([entity.code, func.max(entity.statDate).label('statDate')]).filter(entity.pubDate<=date,entity.pubDate>=left_date).group_by(entity.code).subquery()                
                 #q1 = Query([entity.code, func.max(entity.pubDate).label('pubDate')]).filter(entity.pubDate<=date).group_by(entity.code).subquery()                
                 #q = q.filter(entity.pubDate <= date, entity.pubDate>=left_date).filter(entity.pubDate == q1.c.pubDate, entity.code == q1.c.code)                
                 q = q.filter(entity.statDate == q1.c.statDate, entity.code == q1.c.code)                
@@ -304,6 +304,7 @@ class JqapiMod(AbstractMod):
         register_api('indicator', indicator)
         register_api('valuation', valuation)        
         register_api('lico_fn_sigquafina', lico_fn_sigquafina)        
+        register_api('lico_fn_fcrgincomes', lico_fn_fcrgincomes)        
                
     def tear_down(self, code, exception=None):
         pass
